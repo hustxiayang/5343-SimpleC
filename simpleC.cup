@@ -1,0 +1,361 @@
+import java_cup.runtime.*;
+
+parser code  {: 
+  public void report_error(String message, Object info) {
+    StringBuffer m = new StringBuffer("Error ");
+
+    if (info instanceof java_cup.runtime.Symbol) 
+      m.append( "("+info.toString()+")" );
+     
+    m.append(" : "+message);
+   
+    System.out.println(m);
+  }
+   
+  public void report_fatal_error(String message, Object info) {
+    report_error(message, info);
+    throw new RuntimeException("Fatal Syntax Error");
+  }
+:};
+
+
+
+
+
+
+
+
+
+
+terminal  AUTO, BREAK, CASE, CHAR, CONST, CONTINUE, DEFAULT, DO, DOUBLE, ELSE, ENUM, EXTERN, FLOAT, FOR, GOTO, IF,  INLINE, INT, LONG, REGISTER, RESTRICT, RETURN, SHORT, SIGNED, SIZEOF, STATIC, STRUCT, SWITCH, TYPEDEF, UNION, UNSIGNED, VOID, VOLATILE, WHILE, _BOOL, _COMPLEX, _IMAGINARY;
+terminal LBRACK, RBRACK, LPAREN, RPAREN, LBRACE, RBRACE, DOT, POINTER, PLUSPLUS, MINUSMINUS, YU, STAR, PLUS, MINUS, FEI, GANTANHAO, DIV, SHANG, ZUOYI, YOUYI, LT, GT, LTE, GTE, EQL, NE, XIAOFEI, HUO, LUOJIYU, LUOJIHUO, WENHAO, MAOHAO, SEMICOLON, SANDIAN, ASSGN, CHENGYIDENGYU, CHUYIDENGYU, SHANGDENGYU, JIADENGYU, JIANDENGYU, ZUOYIDENGYU, YOUYIDENGYU, YUDENGYU, FEIDENGYU, HUODENGYU, COMMA, JINGHAO, SHUANGJING;
+terminal java.lang.Number INTEGER_LITERAL;
+terminal java.lang.Number FLOATING_POINT_LITERAL;
+terminal java.lang.String IDENTIFIER;
+
+
+non terminal java.lang.String aprogram, type_specifier, declaration_specifiers;
+non terminal java.lang.String pointers, return_type;
+non terminal java.lang.String direct_declarator, declarator, init_declarator;
+non terminal java.lang.String init_declarator_list,initializer, initializer_list;
+non terminal java.lang.String declaration, declaration_list, expression_statement;
+non terminal java.lang.String iteration_statement, statement,compound_statement;
+non terminal java.lang.String block_item_list, block_item, jump_statement, function;
+non terminal java.lang.String primary_expression,postfix_expression,unary_operator;
+non terminal java.lang.String unary_expression,multiplicative_expression;
+non terminal java.lang.String additive_expression,shift_expression, relational_expression;
+non terminal java.lang.String equality_expression, and_expression,exclusive_or_expression;
+non terminal java.lang.String inclusive_or_expression,logical_and_expression;
+non terminal java.lang.String logical_or_expression,assignment_operator;
+non terminal java.lang.String assignment_expression,expression;
+
+
+
+
+start with aprogram;
+aprogram ::= declaration_list:e1 function:e2
+{: RESULT  = new String(e1 + "\n" + e2); :}
+;
+
+type_specifier::= INT{:RESULT = "int";:}
+                  | LONG{:RESULT = "long";:}
+                  | FLOAT{:RESULT = "float";:}
+                  | DOUBLE{:RESULT = "double";:};
+
+
+
+
+pointers::= STAR
+{:RESULT = "*";:}
+        | STAR:e1  pointers:e2
+{:RESULT = new String(e1 + e2);:}
+;
+
+direct_declarator::= IDENTIFIER:e1
+{:RESULT = e1;:}
+	| direct_declarator:e1 LBRACK INTEGER_LITERAL:aint RBRACK
+{:RESULT = new String(e1 + "[" + aint.toString() +"]");:}
+	| direct_declarator:e1 LBRACK RBRACK
+{:RESULT = new String(e1 + "[]");:}
+	;
+
+declarator::= pointers:e1 direct_declarator:e2
+{:RESULT = new String(e1 + " " + e2); :}
+    | direct_declarator:e1
+{:RESULT = e1; :}
+;
+
+
+init_declarator::= declarator:e1
+{:RESULT = e1;:}
+        | declarator:e1 ASSGN initializer:e2
+{:RESULT = new String(e1 + "=" + e2);:}
+;
+
+init_declarator_list::= init_declarator:e1
+ {:RESULT = e1; :}
+        | init_declarator_list:e1 COMMA init_declarator:e2
+{:RESULT = new String(e1 + "," + e2);:}
+;
+
+
+
+initializer::= assignment_expression:e1
+{:RESULT = e1;:}
+;
+
+declaration ::=  type_specifier:e1 init_declarator_list:e2 SEMICOLON
+{:RESULT = new String(e1 + " " + e2 + ";\n");:}
+;
+
+
+declaration_list::= declaration:e1
+{:RESULT = new String(e1 + "\n") ;:}
+        | declaration_list:e1 declaration:e2
+{:RESULT = new String(e1 + e2);:}
+;
+
+
+
+expression_statement::= SEMICOLON
+{:RESULT = ";";:}
+        | expression:e1 SEMICOLON
+{:RESULT = new String(e1 + ";");:}
+ ;
+
+iteration_statement::= WHILE LPAREN expression:e1 RPAREN statement:e2
+{:RESULT =  new String("while ("  + e1 + ")" + e2);:}
+	| DO statement:e1 WHILE LPAREN expression:e2 RPAREN SEMICOLON
+{:RESULT = new String("do" + e1  + "while("  + e2 + ");");:}
+	| FOR LPAREN expression_statement:e1 expression_statement:e2 RPAREN statement:e3
+{:RESULT = new String("for(" + e1 + e2 + ")" + e3);:}
+	| FOR LPAREN expression_statement:e1 expression_statement:e2 expression:e3 RPAREN statement:e4
+{:RESULT = new String("for(" + e1 + e2 + e3 + ")" + e4);:}
+	;
+
+
+
+statement::= compound_statement:e1
+{:RESULT = new String(e1+"\n");:}
+	| expression_statement:e1
+{:RESULT = new String(e1+"\n");:}
+	| iteration_statement:e1
+{:RESULT = new String(e1+"\n");:}
+	| jump_statement:e1
+{:RESULT = new String(e1+"\n");:}
+	;
+
+
+compound_statement ::= LBRACE RBRACE
+{:RESULT = "{}";:}
+        | LBRACE block_item_list:e1 RBRACE
+{:RESULT = new String("{\n" +e1 + "\n}");:}
+;
+
+block_item_list::= block_item:e1
+{:RESULT = e1;:}
+        | block_item_list:e1 block_item:e2
+{:RESULT = new String(e1 + e2);:}
+ ;
+
+block_item ::= statement:e1
+{:RESULT = e1;:}
+        | declaration:e1
+{:RESULT = e1;:}
+;
+
+
+jump_statement ::=  RETURN SEMICOLON
+{:RESULT = "return ;";:}
+	| RETURN expression:e1 SEMICOLON
+{:RESULT = new String("return " + e1 + ";");:}
+	;
+
+
+function ::= type_specifier:e1 IDENTIFIER:e2 LPAREN RPAREN compound_statement:e3
+{:RESULT = new String(e1 + " " + e2 + "()" + e3);:}
+|VOID IDENTIFIER:e2 LPAREN RPAREN compound_statement:e3
+ {:RESULT = new String( " void " + e2 + "()" + e3);:}
+;
+
+
+
+
+primary_expression::= IDENTIFIER:e1
+{:RESULT = e1;:}
+	| INTEGER_LITERAL:e1
+{:  if (e1 instanceof Long){
+        RESULT = e1.toString()+"L";
+    }
+    else{
+        RESULT = e1.toString();
+    }
+    :}
+	|FLOATING_POINT_LITERAL:e1
+{:
+
+if (e1 instanceof Float){
+        RESULT = e1.toString()+"F";
+    }
+    else{
+        RESULT = e1.toString();
+    }
+
+:}
+	| LPAREN expression:e1 RPAREN
+{:RESULT = new String("(" + e1 + ")");:}
+	;
+
+
+postfix_expression::= primary_expression:e1
+{:RESULT = e1;:}
+	| postfix_expression:e1 LBRACK expression:e2 RBRACK
+{:RESULT = new String(e1 + "[" + e2 + "]");:}
+	| postfix_expression:e1 LPAREN RPAREN
+{:RESULT = new String(e1 + "(" +  ")");:}
+	| postfix_expression:e1 PLUSPLUS
+{:RESULT = new String(e1 + "++");:}
+	| postfix_expression:e1 MINUSMINUS
+{:RESULT = new String(e1 + "--");:}
+	;
+
+
+
+
+
+unary_operator ::= YU  {:RESULT = "&";:}
+	| STAR {:RESULT = "*";:}
+	| PLUS {:RESULT = "+";:}
+	| MINUS{:RESULT = "-";:}
+	| FEI {:RESULT = "~";:}
+	| GANTANHAO{:RESULT = "!";:}
+	;
+
+unary_expression ::= postfix_expression:e1
+{:RESULT = e1;:}
+	| PLUSPLUS unary_expression:e1
+{:RESULT = new String("++" + e1);:}
+	| MINUSMINUS unary_expression:e1
+{:RESULT = new String("--" + e1);:}
+	| unary_operator:e1 unary_expression:e2
+{:RESULT = new String(e1 + e2);:}
+	;
+
+
+
+
+multiplicative_expression ::= unary_expression:e1
+{:RESULT = e1;:}
+	| multiplicative_expression:e1 STAR unary_expression:e2
+{:RESULT = new String(e1 + "*" + e2);:}
+	| multiplicative_expression:e1 DIV unary_expression:e2
+{:RESULT = new String(e1 + "/" + e2);:}
+	| multiplicative_expression:e1 SHANG unary_expression:e2
+{:RESULT = new String(e1 + "%" + e2);:}
+	;
+
+
+additive_expression::= multiplicative_expression:e1
+{:RESULT = e1;:}
+	| additive_expression:e1 PLUS multiplicative_expression:e2
+{:RESULT = new String(e1  + "+" + e2);:}
+	| additive_expression:e1 MINUS  multiplicative_expression:e2
+{:RESULT = new String(e1  + "-" + e2);:}
+	;
+
+
+
+shift_expression::= additive_expression:e1
+{:RESULT = e1; :}
+	| shift_expression:e1 ZUOYI additive_expression:e2
+{:RESULT = new String(e1  + "<<" + e2);:}
+	| shift_expression:e1 YOUYI additive_expression:e2
+{:RESULT = new String(e1  + ">>" + e2);:}
+	;
+
+
+relational_expression ::= shift_expression:e1
+{:RESULT = e1;:}
+	| relational_expression:e1 LT shift_expression:e2
+{:RESULT = new String(e1  + "<" + e2);:}
+	| relational_expression:e1 GT shift_expression:e2
+{:RESULT = new String(e1  + ">" + e2);:}
+	| relational_expression:e1 LTE shift_expression:e2
+{:RESULT = new String(e1  + "<=" + e2);:}
+	| relational_expression:e1 GTE shift_expression:e2
+{:RESULT = new String(e1  + ">=" + e2);:}
+	;
+
+
+
+
+equality_expression ::= relational_expression:e1
+{:RESULT = e1;:}
+	| equality_expression:e1 EQL relational_expression:e2
+{:RESULT = new String(e1  + "==" + e2);:}
+	| equality_expression:e1 NE relational_expression:e2
+{:RESULT = new String(e1  + "!=" + e2);:}
+	;
+
+
+and_expression::= equality_expression:e1
+{:RESULT = e1;:}
+	| and_expression:e1 YU equality_expression:e2
+{:RESULT = new String(e1  + "&" + e2);:}
+	;
+
+exclusive_or_expression::= and_expression:e1
+{:RESULT = e1;:}
+	| exclusive_or_expression:e1 XIAOFEI and_expression:e2
+{:RESULT = new String(e1 + "^"+e2);:}
+	;
+
+inclusive_or_expression::= exclusive_or_expression:e1
+{:RESULT = e1;:}
+	| inclusive_or_expression:e1 HUO exclusive_or_expression:e2
+{:RESULT = new String(e1 + "|"+e2);:}
+	;
+
+logical_and_expression::= inclusive_or_expression:e1
+{:RESULT = e1;:}
+	| logical_and_expression:e1 LUOJIYU inclusive_or_expression:e2
+{:RESULT = new String(e1  + "&&" +  e2);:}
+	;
+
+logical_or_expression::= logical_and_expression:e1
+{:RESULT = e1;:}
+	| logical_or_expression:e1 LUOJIHUO logical_and_expression:e2
+{:RESULT = new String(e1  + "||" +  e2);:}
+	;
+
+
+
+
+
+assignment_operator ::= ASSGN  {:RESULT = "=";:}
+	| CHENGYIDENGYU  {:RESULT = "*=";:}
+	| CHUYIDENGYU  {:RESULT = "/=";:}
+	| SHANGDENGYU {:RESULT = "%=";:}
+	| JIADENGYU  {:RESULT = "+=";:}
+	| JIANDENGYU  {:RESULT = "-=";:}
+	| ZUOYIDENGYU  {:RESULT = "<<=";:}
+	| YOUYIDENGYU  {:RESULT = ">>=";:}
+	| YUDENGYU  {:RESULT = "&=";:}
+	| FEIDENGYU  {:RESULT = "^=";:}
+	| HUODENGYU {:RESULT = "|=";:}
+	;
+
+assignment_expression ::= logical_or_expression:e1
+{:RESULT = e1;:}
+	| unary_expression:e1 assignment_operator:e2 assignment_expression:e3
+{:RESULT = new String(e1 +  e2 + e3);:}
+	;
+
+
+
+expression::= assignment_expression:e1
+{:RESULT = e1;:}
+	| expression:e1 COMMA  assignment_expression:e2
+{:RESULT = new String(e1 + " , " + e2);:}
+	;
+
